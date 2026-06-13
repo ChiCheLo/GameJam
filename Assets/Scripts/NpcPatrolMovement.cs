@@ -22,7 +22,7 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
     [SerializeField] private Transform[] patrolWaypoints;
     
     [Header("AI Settings")]
-    [SerializeField] private AlarmObject alarmObject;
+    [SerializeField] private AlarmClock alarmObject;
     [SerializeField] private Transform playerTransform;
     [SerializeField] private NpcAiState defaultState = NpcAiState.IdleBeforeAlarm;
 
@@ -509,8 +509,11 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
 
     private bool CanMoveTo(Vector3 pos)
     {
-        Vector3 halfExtents = Vector3.one * (tileSize * 0.45f);
-        Collider[] hits = Physics.OverlapBox(pos, halfExtents, Quaternion.identity, wallLayer);
+        Vector3 checkPos = pos;
+        checkPos.y += 0.5f; // 提升檢測點的 Y 軸高度，防止因 NPC Y 軸較低而與地板（Road）產生碰撞判定
+
+        Vector3 halfExtents = new Vector3(tileSize * 0.45f, 0.45f, tileSize * 0.45f);
+        Collider[] hits = Physics.OverlapBox(checkPos, halfExtents, Quaternion.identity, wallLayer);
         
         foreach (Collider hit in hits)
         {
