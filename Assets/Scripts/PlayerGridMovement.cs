@@ -1,11 +1,12 @@
 using System;
 using UnityEngine;
 
-public class PlayerGridMovement : MonoBehaviour
+public class PlayerGridMovement : MonoBehaviour, IResettable
 {
-    [SerializeField] private float tileSize = 1f;
+    [SerializeField] private float tileSize = 0.5f;
     [SerializeField] private float moveSpeed = 12f;
     [SerializeField] private LayerMask wallLayer;
+    [SerializeField] private Vector3 spawnPosition;
 
     public static event Action OnActionTaken;
 
@@ -14,7 +15,8 @@ public class PlayerGridMovement : MonoBehaviour
 
     void Start()
     {
-       SnapToGrid();
+        transform.position = spawnPosition;
+        _targetPosition = spawnPosition;
     }
 
     void Update()
@@ -30,6 +32,11 @@ public class PlayerGridMovement : MonoBehaviour
 
     void HandleInput()
     {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            LevelManager.ResetAll();
+        }
+        
         Vector3 dir = Vector3.zero;
 
         if (Input.GetKeyDown(KeyCode.W)) dir = Vector3.forward;
@@ -44,6 +51,8 @@ public class PlayerGridMovement : MonoBehaviour
 
     void TryMove(Vector3 dir)
     {
+        if (!LevelManager.Instance.canAction) return;
+
         Vector3 next = _targetPosition + dir * tileSize;
 
         if (!CanMoveTo(next)) return;
@@ -71,14 +80,10 @@ public class PlayerGridMovement : MonoBehaviour
         }
     }
 
-    void SnapToGrid()
+    public void OnReset()
     {
-        Vector3 p = transform.position;
-        p.x = Mathf.Round(p.x / tileSize) * tileSize;
-        p.z = Mathf.Round(p.z / tileSize) * tileSize;
-        p.x -= 0.5f;
-        p.z -= 0.5f;
-        transform.position = p;
-        _targetPosition = transform.position;
+        transform.position = spawnPosition;
+        _targetPosition = spawnPosition;
+        _isMoving = false;
     }
 }
