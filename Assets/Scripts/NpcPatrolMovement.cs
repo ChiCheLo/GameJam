@@ -1,8 +1,16 @@
 using System.Collections;
 using UnityEngine;
 
-public class NpcPatrolMovement : MonoBehaviour
+public class NpcPatrolMovement : MonoBehaviour, IResettable
 {
+    public enum NpcAiState
+    {
+        IdleBeforeAlarm, // 鬧鐘響前：停在原位，但如果玩家進九宮格則轉為 ChasePlayer
+        GoToAlarm,       // 鬧鐘響了：前往關鬧鐘，關完轉為 ChasePlayer
+        ChasePlayer,     // 追逐玩家：直接朝玩家移動
+        Patrol           // 巡邏（無鬧鐘關卡預設此狀態，或作為備用）
+    }
+
     [Header("Movement Settings")]
     [SerializeField] private float tileSize = 1f;
     [SerializeField] private float moveSpeed = 8f;
@@ -11,14 +19,37 @@ public class NpcPatrolMovement : MonoBehaviour
     [Header("Patrol Settings")]
     [SerializeField] private Transform[] patrolWaypoints;
     
+    [Header("AI Settings")]
+    [SerializeField] private AlarmObject alarmObject;
+    [SerializeField] private Transform playerTransform;
+    [SerializeField] private NpcAiState defaultState = NpcAiState.IdleBeforeAlarm;
+
     private int _waypointIndex = 0;
     private Vector3 _targetPosition;
     private bool _isMoving;
 
+    private NpcAiState _currentState;
+    private Vector3 _startPosition;
+
+    public NpcAiState CurrentState => _currentState;
+
     private void Start()
     {
         SnapToGrid();
-        if (patrolWaypoints == null || patrolWaypoints.Length == 0)
+        _startPosition = transform.position; // 記錄初始位置供重置使用
+
+        if (playerTransform == null)
+        {
+            PlayerGridMovement p = FindFirstObjectByType<PlayerGridMovement>();
+            if (p != null)
+            {
+                playerTransform = p.transform;
+            }
+        }
+
+        ResetAiState();
+
+        if (_currentState == NpcAiState.Patrol && (patrolWaypoints == null || patrolWaypoints.Length == 0))
         {
             Debug.LogError($"[NpcPatrolMovement] {gameObject.name} 沒有設定任何巡邏點 (Patrol Waypoints)！");
         }
@@ -33,8 +64,13 @@ public class NpcPatrolMovement : MonoBehaviour
         }
         else
         {
-            // 延遲註冊以防 Start/Awake 順序問題
             StartCoroutine(RegisterToTurnManager());
+        }
+
+        // 註冊鬧鐘響起事件
+        if (alarmObject != null)
+        {
+            alarmObject.OnAlarmRung += HandleAlarmRung;
         }
     }
 
@@ -43,6 +79,10 @@ public class NpcPatrolMovement : MonoBehaviour
         if (TurnManager.Instance != null)
         {
             TurnManager.Instance.OnNpcTakeTurn -= StartNpcTurn;
+        }
+        if (alarmObject != null)
+        {
+            alarmObject.OnAlarmRung -= HandleAlarmRung;
         }
     }
 
@@ -59,11 +99,26 @@ public class NpcPatrolMovement : MonoBehaviour
         {
             StepTowardTarget();
         }
+
+        // 隨時檢查玩家是否與 NPC 踏入同一格
+        CheckPlayerCaughtInstant();
+    }
+
+    private void CheckPlayerCaughtInstant()
+    {
+        if (playerTransform != null)
+        {
+            if (WorldToGrid(transform.position) == WorldToGrid(playerTransform.position))
+            {
+                Debug.Log($"[NpcPatrolMovement] 偵測到玩家與 NPC 重疊！重置關卡。");
+                LevelManager.ResetAll();
+            }
+        }
     }
 
     private void StartNpcTurn(int steps)
     {
-        Debug.Log($"[NpcPatrolMovement] {gameObject.name} 開始行動回合，預計走 {steps} 步。");
+        Debug.Log($"[NpcPatrolMovement] {gameObject.name} 開始行動回合，目前狀態為 {_currentState}，預計走 {steps} 步。");
         StartCoroutine(NpcTurnCoroutine(steps));
     }
 
@@ -71,30 +126,24 @@ public class NpcPatrolMovement : MonoBehaviour
     {
         for (int i = 0; i < steps; i++)
         {
-            if (patrolWaypoints == null || patrolWaypoints.Length == 0)
+            // 每次移動前，檢查狀態轉換條件（例如玩家是否在 9 宮格內）
+            UpdateAiState();
+
+            // 取得目前的目標位置
+            Vector3 targetPos = GetTargetPositionForState();
+
+            // 如果處於待機且未受驚擾狀態，不進行任何物理移動
+            if (_currentState == NpcAiState.IdleBeforeAlarm)
             {
-                Debug.LogWarning($"[NpcPatrolMovement] {gameObject.name} 因無巡邏點跳過此步。");
                 yield return null;
-                break;
+                continue;
             }
 
-            Vector3 targetWaypoint = patrolWaypoints[_waypointIndex].position;
-
-            // 檢查是否抵達當前的巡邏點（以網格座標比對，防範偏差）
-            if (WorldToGrid(_targetPosition) == WorldToGrid(targetWaypoint))
-            {
-                int oldIndex = _waypointIndex;
-                _waypointIndex = (_waypointIndex + 1) % patrolWaypoints.Length;
-                targetWaypoint = patrolWaypoints[_waypointIndex].position;
-                Debug.Log($"[NpcPatrolMovement] {gameObject.name} 抵達巡邏點 {oldIndex}，切換到巡邏點 {_waypointIndex}。");
-            }
-
-            Vector3 nextPos = DetermineNextStep(targetWaypoint);
+            Vector3 nextPos = DetermineNextStep(targetPos);
 
             if (nextPos == _targetPosition)
             {
                 Debug.LogWarning($"[NpcPatrolMovement] {gameObject.name} 在第 {i+1} 步被卡住了，原地不動！");
-                // 卡住時等待一小段時間避免瞬間跑完 Loop
                 yield return new WaitForSeconds(0.1f);
                 continue;
             }
@@ -102,11 +151,14 @@ public class NpcPatrolMovement : MonoBehaviour
             _targetPosition = nextPos;
             _isMoving = true;
 
-            // 等待本次移動完成（由 StepTowardTarget 負責完成）
+            // 等待本次移動滑動完成
             while (_isMoving)
             {
                 yield return null;
             }
+
+            // 行動後檢查（例如是否踏到了鬧鐘所在的格子）
+            CheckPostStepActions();
         }
 
         // NPC 行動完畢，釋放鎖定
@@ -114,6 +166,134 @@ public class NpcPatrolMovement : MonoBehaviour
         {
             TurnManager.Instance.IsNpcMoving = false;
         }
+    }
+
+    private void UpdateAiState()
+    {
+        if (playerTransform == null) return;
+
+        // 1. 鬧鐘響前，若玩家進入九宮格 (X、Z 座標差皆 <= 1)，轉為 Chase 模式
+        if (_currentState == NpcAiState.IdleBeforeAlarm)
+        {
+            Vector3Int playerGrid = WorldToGrid(playerTransform.position);
+            Vector3Int npcGrid = WorldToGrid(_targetPosition);
+
+            if (Mathf.Abs(playerGrid.x - npcGrid.x) <= 1 && Mathf.Abs(playerGrid.z - npcGrid.z) <= 1)
+            {
+                _currentState = NpcAiState.ChasePlayer;
+                Debug.Log($"[NpcPatrolMovement] {gameObject.name} 偵測到玩家在九宮格內！切換到 ChasePlayer 狀態。");
+            }
+        }
+
+        // 2. 若處於 GoToAlarm 狀態，檢查是否已經在鬧鐘的上下左右相鄰格子 (防範鬧鐘身上有碰撞體而無法踩上去)
+        if (_currentState == NpcAiState.GoToAlarm && alarmObject != null)
+        {
+            Vector3Int alarmGrid = WorldToGrid(alarmObject.transform.position);
+            Vector3Int npcGrid = WorldToGrid(_targetPosition);
+
+            int dist = Mathf.Abs(alarmGrid.x - npcGrid.x) + Mathf.Abs(alarmGrid.z - npcGrid.z);
+            if (dist <= 1)
+            {
+                alarmObject.TurnOff();
+                _currentState = NpcAiState.ChasePlayer;
+                Debug.Log($"[NpcPatrolMovement] {gameObject.name} 已在鬧鐘旁 (距離 {dist})，直接關閉鬧鐘並切換為 Chase 模式！");
+            }
+        }
+    }
+
+    private Vector3 GetTargetPositionForState()
+    {
+        switch (_currentState)
+        {
+            case NpcAiState.ChasePlayer:
+                if (playerTransform != null)
+                {
+                    return playerTransform.position;
+                }
+                return _targetPosition;
+
+            case NpcAiState.GoToAlarm:
+                if (alarmObject != null)
+                {
+                    return alarmObject.transform.position;
+                }
+                return _targetPosition;
+
+            case NpcAiState.Patrol:
+                if (patrolWaypoints != null && patrolWaypoints.Length > 0)
+                {
+                    Vector3 targetWaypoint = patrolWaypoints[_waypointIndex].position;
+                    // 檢查是否抵達當前的巡邏點（以網格座標比對，防範偏差）
+                    if (WorldToGrid(_targetPosition) == WorldToGrid(targetWaypoint))
+                    {
+                        int oldIndex = _waypointIndex;
+                        _waypointIndex = (_waypointIndex + 1) % patrolWaypoints.Length;
+                        targetWaypoint = patrolWaypoints[_waypointIndex].position;
+                        Debug.Log($"[NpcPatrolMovement] {gameObject.name} 抵達巡邏點 {oldIndex}，切換到巡邏點 {_waypointIndex}。");
+                    }
+                    return targetWaypoint;
+                }
+                return _targetPosition;
+
+            case NpcAiState.IdleBeforeAlarm:
+            default:
+                return _targetPosition;
+        }
+    }
+
+    private void CheckPostStepActions()
+    {
+        // 前往關鬧鐘過程中，如果走到了鬧鐘格子或相鄰格子
+        if (_currentState == NpcAiState.GoToAlarm && alarmObject != null)
+        {
+            Vector3Int alarmGrid = WorldToGrid(alarmObject.transform.position);
+            Vector3Int npcGrid = WorldToGrid(_targetPosition);
+
+            int dist = Mathf.Abs(alarmGrid.x - npcGrid.x) + Mathf.Abs(alarmGrid.z - npcGrid.z);
+            if (dist <= 1)
+            {
+                alarmObject.TurnOff();
+                _currentState = NpcAiState.ChasePlayer;
+                Debug.Log($"[NpcPatrolMovement] {gameObject.name} 抵達並關閉了鬧鐘！切換到 ChasePlayer 狀態！");
+            }
+        }
+    }
+
+    private void HandleAlarmRung()
+    {
+        // 聽到鬧鐘響時，不論是在 Idle 還是 Patrol 狀態，都前往關鬧鐘
+        if (_currentState == NpcAiState.IdleBeforeAlarm || _currentState == NpcAiState.Patrol)
+        {
+            _currentState = NpcAiState.GoToAlarm;
+            Debug.Log($"[NpcPatrolMovement] {gameObject.name} 聽到鬧鐘響！開始前往關鬧鐘！");
+        }
+    }
+
+    private void ResetAiState()
+    {
+        _waypointIndex = 0;
+        _isMoving = false;
+
+        if (alarmObject != null)
+        {
+            _currentState = NpcAiState.IdleBeforeAlarm;
+            if (alarmObject.IsRinging)
+            {
+                _currentState = NpcAiState.GoToAlarm;
+            }
+        }
+        else
+        {
+            _currentState = defaultState;
+        }
+        Debug.Log($"[NpcPatrolMovement] {gameObject.name} AI 狀態初始化/重置為: {_currentState}");
+    }
+
+    public void OnReset()
+    {
+        transform.position = _startPosition;
+        _targetPosition = _startPosition;
+        ResetAiState();
     }
 
     private Vector3 DetermineNextStep(Vector3 targetWaypoint)
@@ -144,14 +324,13 @@ public class NpcPatrolMovement : MonoBehaviour
         };
 
         bool found = false;
-        int maxIterations = 1500; // A* 搜尋非常精準，1500 次足夠覆蓋超大地圖
+        int maxIterations = 1500;
         int iterations = 0;
 
         while (openSet.Count > 0 && iterations < maxIterations)
         {
             iterations++;
             
-            // 尋找 fScore 最小的節點
             Vector3Int current = openSet[0];
             float lowestF = fScore.ContainsKey(current) ? fScore[current] : float.MaxValue;
             for (int i = 1; i < openSet.Count; i++)
@@ -208,14 +387,12 @@ public class NpcPatrolMovement : MonoBehaviour
             return GridToWorld(curr);
         }
 
-        // 如果找不到完整路徑（例如被完全堵死），則退回到貪婪的 4 方向搜尋
         Debug.LogWarning($"[NpcPatrolMovement] A* 找不到前往 {targetWaypoint} 的路徑，退回四方向貪婪搜尋。");
         return DetermineNextStepGreedy(targetWaypoint);
     }
 
     private float GetHeuristic(Vector3Int a, Vector3Int b)
     {
-        // 使用曼哈頓距離 (Manhattan Distance) 作為 A* 啟發值
         return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.z - b.z);
     }
 
@@ -268,9 +445,14 @@ public class NpcPatrolMovement : MonoBehaviour
     {
         Vector3 halfExtents = Vector3.one * (tileSize * 0.45f);
         Collider[] hits = Physics.OverlapBox(pos, halfExtents, Quaternion.identity, wallLayer);
-        if (hits.Length > 0)
+        
+        foreach (Collider hit in hits)
         {
-            Debug.Log($"[NpcPatrolMovement] 碰撞檢測阻擋物: {hits[0].name} (Layer: {LayerMask.LayerToName(hits[0].gameObject.layer)})");
+            // 忽略 NPC 自己（或子物件）與 Player（或子物件）的碰撞體，避免誤判
+            if (hit.gameObject == gameObject || hit.transform.root == transform.root) continue;
+            if (playerTransform != null && (hit.gameObject == playerTransform.gameObject || hit.transform.root == playerTransform.root)) continue;
+
+            Debug.Log($"[NpcPatrolMovement] 碰撞檢測阻擋物: {hit.name} (Layer: {LayerMask.LayerToName(hit.gameObject.layer)})");
             return false;
         }
         return true;
