@@ -15,6 +15,8 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
     [SerializeField] private float tileSize = 1f;
     [SerializeField] private float moveSpeed = 8f;
     [SerializeField] private LayerMask wallLayer;
+    [Tooltip("每步之間的停頓時間（可在 Editor 中設定，例如 0.2 秒）")]
+    [SerializeField] private float pauseBetweenSteps = 0.2f;
 
     [Header("Patrol Settings")]
     [SerializeField] private Transform[] patrolWaypoints;
@@ -30,6 +32,8 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
 
     private NpcAiState _currentState;
     private Vector3 _startPosition;
+    private bool _skipChaseThisTurn = false; // 標記是否需要在本回合跳過追逐移動
+    private PlayerGridMovement _playerMovement;
 
     public NpcAiState CurrentState => _currentState;
 
@@ -38,15 +42,7 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
         SnapToGrid();
         _startPosition = transform.position; // 記錄初始位置供重置使用
 
-        if (playerTransform == null)
-        {
-            PlayerGridMovement p = FindFirstObjectByType<PlayerGridMovement>();
-            if (p != null)
-            {
-                playerTransform = p.transform;
-            }
-        }
-
+        CachePlayerMovement();
         ResetAiState();
 
         if (_currentState == NpcAiState.Patrol && (patrolWaypoints == null || patrolWaypoints.Length == 0))
@@ -124,6 +120,22 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
 
     private IEnumerator NpcTurnCoroutine(int steps)
     {
+        // 進入回合時，先檢測玩家是否踏入了九宮格
+        UpdateAiState();
+
+        // 如果本回合需要跳過追逐（玩家剛走進九宮格的當回合），NPC 留在原地不動
+        if (_skipChaseThisTurn)
+        {
+            _skipChaseThisTurn = false; // 重設標記
+            Debug.Log($"[NpcPatrolMovement] {gameObject.name} 本回合被玩家驚擾，停在原位，等玩家下一步再開始追。");
+            
+            if (TurnManager.Instance != null)
+            {
+                TurnManager.Instance.IsNpcMoving = false; // 釋放行動鎖定
+            }
+            yield break; // 結束本回合行動
+        }
+
         for (int i = 0; i < steps; i++)
         {
             // 每次移動前，檢查狀態轉換條件（例如玩家是否在 9 宮格內）
@@ -159,6 +171,12 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
 
             // 行動後檢查（例如是否踏到了鬧鐘所在的格子）
             CheckPostStepActions();
+
+            // 如果還有下一步要走，就稍微停頓一下
+            if (i < steps - 1)
+            {
+                yield return new WaitForSeconds(pauseBetweenSteps);
+            }
         }
 
         // NPC 行動完畢，釋放鎖定
@@ -175,13 +193,15 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
         // 1. 鬧鐘響前，若玩家進入九宮格 (X、Z 座標差皆 <= 1)，轉為 Chase 模式
         if (_currentState == NpcAiState.IdleBeforeAlarm)
         {
-            Vector3Int playerGrid = WorldToGrid(playerTransform.position);
+            Vector3 targetToCheck = _playerMovement != null ? _playerMovement.TargetPosition : playerTransform.position;
+            Vector3Int playerGrid = WorldToGrid(targetToCheck);
             Vector3Int npcGrid = WorldToGrid(_targetPosition);
 
             if (Mathf.Abs(playerGrid.x - npcGrid.x) <= 1 && Mathf.Abs(playerGrid.z - npcGrid.z) <= 1)
             {
                 _currentState = NpcAiState.ChasePlayer;
-                Debug.Log($"[NpcPatrolMovement] {gameObject.name} 偵測到玩家在九宮格內！切換到 ChasePlayer 狀態。");
+                _skipChaseThisTurn = true; // 鎖定這回合，等玩家下一步再追
+                Debug.Log($"[NpcPatrolMovement] {gameObject.name} 偵測到玩家在九宮格內！切換到 ChasePlayer 狀態，下回合開始追擊。");
             }
         }
 
@@ -206,6 +226,10 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
         switch (_currentState)
         {
             case NpcAiState.ChasePlayer:
+                if (_playerMovement != null)
+                {
+                    return _playerMovement.TargetPosition;
+                }
                 if (playerTransform != null)
                 {
                     return playerTransform.position;
@@ -269,10 +293,46 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
         }
     }
 
+    private void CachePlayerMovement()
+    {
+        if (playerTransform == null)
+        {
+            _playerMovement = FindFirstObjectByType<PlayerGridMovement>();
+            if (_playerMovement != null)
+            {
+                playerTransform = _playerMovement.transform;
+            }
+        }
+        else if (_playerMovement == null)
+        {
+            _playerMovement = playerTransform.GetComponent<PlayerGridMovement>();
+        }
+    }
+
+    private void CheckPlayerIn9GridAtStart()
+    {
+        if (_currentState == NpcAiState.IdleBeforeAlarm && playerTransform != null)
+        {
+            Vector3 targetToCheck = _playerMovement != null ? _playerMovement.TargetPosition : playerTransform.position;
+            Vector3Int playerGrid = WorldToGrid(targetToCheck);
+            Vector3Int npcGrid = WorldToGrid(_startPosition);
+
+            if (Mathf.Abs(playerGrid.x - npcGrid.x) <= 1 && Mathf.Abs(playerGrid.z - npcGrid.z) <= 1)
+            {
+                _currentState = NpcAiState.ChasePlayer;
+                _skipChaseThisTurn = false; // 初始就在九宮格內，因此玩家第一步移動時就要開始追，不跳過
+                Debug.Log($"[NpcPatrolMovement] {gameObject.name} 偵測到玩家初始就在九宮格內！直接切換為 ChasePlayer 狀態，玩家下一步即開始追擊。");
+            }
+        }
+    }
+
     private void ResetAiState()
     {
         _waypointIndex = 0;
         _isMoving = false;
+        _skipChaseThisTurn = false;
+
+        CachePlayerMovement();
 
         if (alarmObject != null)
         {
@@ -286,6 +346,9 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
         {
             _currentState = defaultState;
         }
+
+        CheckPlayerIn9GridAtStart();
+
         Debug.Log($"[NpcPatrolMovement] {gameObject.name} AI 狀態初始化/重置為: {_currentState}");
     }
 

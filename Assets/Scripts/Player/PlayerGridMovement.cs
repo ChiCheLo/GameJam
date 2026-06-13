@@ -16,6 +16,8 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
     private Quaternion _spawnRotation;
     private bool _isMoving;
 
+    public Vector3 TargetPosition => _targetPosition;
+
     void Start()
     {
         transform.position = spawnPosition;
@@ -31,6 +33,12 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
         if (_isMoving)
         {
             StepTowardTarget();
+            return;
+        }
+
+        // 如果 NPC 還在走，不允許玩家行動
+        if (TurnManager.Instance != null && TurnManager.Instance.IsNpcMoving)
+        {
             return;
         }
 
