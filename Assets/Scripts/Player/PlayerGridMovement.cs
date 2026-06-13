@@ -46,7 +46,14 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            if (interactionTrigger != null && interactionTrigger.TriggerInteract())
+            if (LevelManager.Instance.canAction && interactionTrigger != null && interactionTrigger.TriggerInteract())
+                OnActionTaken?.Invoke();
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            if (LevelManager.Instance.canAction && interactionTrigger != null && interactionTrigger.TriggerKeep())
                 OnActionTaken?.Invoke();
             return;
         }
