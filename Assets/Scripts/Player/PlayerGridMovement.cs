@@ -119,12 +119,18 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
         }
     }
 
+    public void SetSpawn(Vector3 position, Vector3 euler)
+    {
+        spawnPosition  = position;
+        _spawnRotation = Quaternion.Euler(euler);
+    }
+
     public void OnReset()
     {
         transform.position = spawnPosition;
-        _targetPosition = spawnPosition;
-        _targetRotation = _spawnRotation;
+        _targetPosition    = spawnPosition;
+        _targetRotation    = _spawnRotation;
         transform.rotation = _spawnRotation;
-        _isMoving = false;
+        _isMoving          = false;
     }
 }

@@ -4,7 +4,7 @@ public abstract class KeepableBase : MonoBehaviour, IKeepable, IResettable
 {
     [SerializeField] private GameObject targetUI;
 
-    protected bool IsKept;
+    public bool IsKept { get; private set; }
 
     public void OnKeep()
     {
