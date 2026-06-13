@@ -52,7 +52,14 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            if (interactionTrigger != null && interactionTrigger.TriggerInteract())
+            if (LevelManager.Instance.canAction && interactionTrigger != null && interactionTrigger.TriggerInteract())
+                OnActionTaken?.Invoke();
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            if (LevelManager.Instance.canAction && interactionTrigger != null && interactionTrigger.TriggerKeep())
                 OnActionTaken?.Invoke();
             return;
         }
@@ -112,12 +119,18 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
         }
     }
 
+    public void SetSpawn(Vector3 position, Vector3 euler)
+    {
+        spawnPosition  = position;
+        _spawnRotation = Quaternion.Euler(euler);
+    }
+
     public void OnReset()
     {
         transform.position = spawnPosition;
-        _targetPosition = spawnPosition;
-        _targetRotation = _spawnRotation;
+        _targetPosition    = spawnPosition;
+        _targetRotation    = _spawnRotation;
         transform.rotation = _spawnRotation;
-        _isMoving = false;
+        _isMoving          = false;
     }
 }
