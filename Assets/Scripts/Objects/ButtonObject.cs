@@ -16,6 +16,8 @@ public class ButtonObject : KeepableBase, IInteractable
         ApplyState();
     }
 
+    public string InteractLabel => "按下";
+
     public void Interact()
     {
         _isOpen = !_isOpen;

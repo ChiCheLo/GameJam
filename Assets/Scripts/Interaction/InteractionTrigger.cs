@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InteractionTrigger : MonoBehaviour
 {
     [SerializeField] private GameObject interactUI;
     [SerializeField] private GameObject keepUI;
+    [SerializeField] private Text interactLabelText;
 
     private readonly List<IInteractable> _interactables = new();
     private readonly List<IKeepable> _keepables = new();
@@ -57,11 +60,15 @@ public class InteractionTrigger : MonoBehaviour
 
     void UpdateUI()
     {
-        bool hasInteractable = _interactables.Any(i => !IsKept(i));
+        var firstValid = _interactables.FirstOrDefault(i => !IsKept(i));
+        bool hasInteractable = firstValid != null;
         bool hasKeepable     = _keepables.Count > 0;
 
         interactUI?.SetActive(hasInteractable);
         keepUI?.SetActive(hasKeepable);
+
+        if (hasInteractable && interactLabelText != null)
+            interactLabelText.text = firstValid.InteractLabel;
     }
 
     bool IsKept(IInteractable i)

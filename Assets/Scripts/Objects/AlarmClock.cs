@@ -7,6 +7,8 @@ public class AlarmClock : KeepableBase, IInteractable
     private bool _isRinging;
     private bool _snapshotIsRinging;
 
+    public string InteractLabel => "啟動";
+
     public void Interact()
     {
         _isRinging = !_isRinging;
