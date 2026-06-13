@@ -25,6 +25,12 @@ public class PlayerGridMovement : MonoBehaviour
             return;
         }
 
+        // 如果 NPC 還在走，不允許玩家行動
+        if (TurnManager.Instance != null && TurnManager.Instance.IsNpcMoving)
+        {
+            return;
+        }
+
         HandleInput();
     }
 
