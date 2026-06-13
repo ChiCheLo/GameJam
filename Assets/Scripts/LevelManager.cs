@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 
@@ -45,7 +44,6 @@ public class LevelManager : MonoBehaviour
             apText.text = $"AP: {_currentAP} / {maxAP}";
     }
 
-    [Button]
     public static void ResetAll()
     {
         if(Instance == null) return;

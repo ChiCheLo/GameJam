@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PlayerGridMovement : MonoBehaviour, IResettable
 {
-    [SerializeField] private float tileSize = 0.5f;
+    [SerializeField] private float tileSize = 1f;
     [SerializeField] private float moveSpeed = 12f;
     [SerializeField] private LayerMask wallLayer;
     [SerializeField] private Vector3 spawnPosition;
@@ -11,16 +11,22 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
     public static event Action OnActionTaken;
 
     private Vector3 _targetPosition;
+    private Quaternion _targetRotation;
+    private Quaternion _spawnRotation;
     private bool _isMoving;
 
     void Start()
     {
         transform.position = spawnPosition;
         _targetPosition = spawnPosition;
+        _spawnRotation = transform.rotation;
+        _targetRotation = transform.rotation;
     }
 
     void Update()
     {
+        transform.rotation = _targetRotation;
+
         if (_isMoving)
         {
             StepTowardTarget();
@@ -36,7 +42,19 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
         {
             LevelManager.ResetAll();
         }
-        
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            _targetRotation *= Quaternion.Euler(0, -90f, 0);
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            _targetRotation *= Quaternion.Euler(0, 90f, 0);
+            return;
+        }
+
         Vector3 dir = Vector3.zero;
 
         if (Input.GetKeyDown(KeyCode.W)) dir = Vector3.forward;
@@ -57,6 +75,7 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
 
         if (!CanMoveTo(next)) return;
 
+        _targetRotation = Quaternion.LookRotation(dir);
         _targetPosition = next;
         _isMoving = true;
         OnActionTaken?.Invoke();
@@ -64,7 +83,6 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
 
     bool CanMoveTo(Vector3 pos)
     {
-        // 用稍小的 half-extent 避免邊界誤判
         Vector3 halfExtents = Vector3.one * (tileSize * 0.45f);
         return Physics.OverlapBox(pos, halfExtents, Quaternion.identity, wallLayer).Length == 0;
     }
@@ -84,6 +102,8 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
     {
         transform.position = spawnPosition;
         _targetPosition = spawnPosition;
+        _targetRotation = _spawnRotation;
+        transform.rotation = _spawnRotation;
         _isMoving = false;
     }
 }
