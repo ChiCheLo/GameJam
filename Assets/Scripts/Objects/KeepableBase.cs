@@ -12,15 +12,25 @@ public abstract class KeepableBase : MonoBehaviour, IKeepable, IResettable
 
         if (IsKept)
         {
+            KeepManager.Instance?.RegisterKept(this);
             targetUI?.SetActive(true);
             SaveSnapshot();
             OnKeepInternal();
         }
         else
         {
+            KeepManager.Instance?.UnregisterKept(this);
             targetUI?.SetActive(false);
             OnUnkeepInternal();
         }
+    }
+
+    // 給 KeepManager 呼叫，強制取消 Keep 而不觸發 RegisterKept
+    internal void ForceUnkeep()
+    {
+        IsKept = false;
+        targetUI?.SetActive(false);
+        OnUnkeepInternal();
     }
 
     public void OnReset()
