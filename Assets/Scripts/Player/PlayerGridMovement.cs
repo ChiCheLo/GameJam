@@ -15,6 +15,7 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
     private Quaternion _targetRotation;
     private Quaternion _spawnRotation;
     private bool _isMoving;
+    private float _inputCooldown;
 
     public Vector3 TargetPosition => _targetPosition;
 
@@ -28,6 +29,8 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
 
     void Update()
     {
+        if (_inputCooldown > 0) _inputCooldown -= Time.deltaTime;
+
         transform.rotation = _targetRotation;
 
         if (_isMoving)
@@ -52,29 +55,39 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
             LevelManager.ResetAll();
         }
 
+        if (_inputCooldown > 0) return;
+
         if (Input.GetKeyDown(KeyCode.Space))
         {
             if (LevelManager.Instance.canAction && interactionTrigger != null && interactionTrigger.TriggerInteract())
+            {
                 OnActionTaken?.Invoke();
+                _inputCooldown = 0.2f;
+            }
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.F))
         {
             if (LevelManager.Instance.canAction && interactionTrigger != null && interactionTrigger.TriggerKeep())
+            {
                 OnActionTaken?.Invoke();
+                _inputCooldown = 0.2f;
+            }
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.Q))
         {
             _targetRotation *= Quaternion.Euler(0, -90f, 0);
+            _inputCooldown = 0.2f;
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.E))
         {
             _targetRotation *= Quaternion.Euler(0, 90f, 0);
+            _inputCooldown = 0.2f;
             return;
         }
 
@@ -101,6 +114,7 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
         _targetRotation = Quaternion.LookRotation(dir);
         _targetPosition = next;
         _isMoving = true;
+        _inputCooldown = 0.2f;
         OnActionTaken?.Invoke();
     }
 

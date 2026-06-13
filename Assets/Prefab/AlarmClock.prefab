@@ -272,6 +272,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   targetUI: {fileID: 3659069126374512660}
   floatingText: {fileID: 139158648907575108}
+  ringOnStart: 0
+  ringAfterPlayerSteps: 0
 --- !u!54 &5387131563397685756
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -463,7 +465,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 2062717861228145414}
-  offset: {x: 0, y: 0.2, z: 0}
+  offset: {x: 0, y: 0, z: 0.2}
 --- !u!1 &7649289166643463275
 GameObject:
   m_ObjectHideFlags: 0

@@ -35,18 +35,24 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
     private bool _skipChaseThisTurn = false; // 標記是否需要在本回合跳過追逐移動
     private PlayerGridMovement _playerMovement;
 
+    private Vector3 _areaSnapshotPosition;
+    private Vector3 _areaSnapshotTargetPosition;
+    private NpcAiState _areaSnapshotState;
+    private int _areaSnapshotWaypointIndex;
+
     public NpcAiState CurrentState => _currentState;
 
     private void Awake()
     {
-        SnapToGrid();
-        _startPosition = transform.position; // 提早在 Awake 記錄初始位置，防止被早期的 OnReset() 蓋成 (0,0,0)
+        _startPosition  = transform.position;
+        _targetPosition = transform.position;
     }
 
     private void Start()
     {
         CachePlayerMovement();
         ResetAiState();
+        SaveAreaSnapshot();
 
         if (_currentState == NpcAiState.Patrol && (patrolWaypoints == null || patrolWaypoints.Length == 0))
         {
@@ -348,11 +354,29 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
         Debug.Log($"[NpcPatrolMovement] {gameObject.name} AI 狀態初始化/重置為: {_currentState}");
     }
 
+    public void SaveAreaSnapshot()
+    {
+        _areaSnapshotPosition       = transform.position;
+        _areaSnapshotTargetPosition = _targetPosition;
+        _areaSnapshotState          = _currentState;
+        _areaSnapshotWaypointIndex  = _waypointIndex;
+    }
+
     public void OnReset()
     {
-        transform.position = _startPosition;
-        _targetPosition = _startPosition;
-        ResetAiState();
+        _isMoving           = false;
+        _skipChaseThisTurn  = false;
+        _waypointIndex      = _areaSnapshotWaypointIndex;
+        _currentState       = _areaSnapshotState;
+        transform.position  = _areaSnapshotPosition;
+        _targetPosition     = _areaSnapshotTargetPosition;
+        CachePlayerMovement();
+
+        if (alarmObject != null && alarmObject.IsRinging &&
+            (_currentState == NpcAiState.IdleBeforeAlarm || _currentState == NpcAiState.Patrol))
+        {
+            _currentState = NpcAiState.GoToAlarm;
+        }
     }
 
     private Vector3 DetermineNextStep(Vector3 targetWaypoint)

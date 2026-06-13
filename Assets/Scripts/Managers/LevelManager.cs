@@ -11,8 +11,7 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private int maxAP = 5;
     [SerializeField] private TMP_Text apText;
 
-    [Header("Levels")]
-    [SerializeField] private List<LevelArea> levels;
+    [Header("Levels")] [SerializeField] private List<LevelArea> levels;
     [SerializeField] private PlayerGridMovement player;
     [SerializeField] private float cameraMoveSpeed = 5f;
 
@@ -63,6 +62,9 @@ public class LevelManager : MonoBehaviour
             return;
         }
 
+        foreach (var npc in FindObjectsByType<NpcPatrolMovement>(FindObjectsSortMode.None))
+            npc.SaveAreaSnapshot();
+
         _currentLevelIndex = index;
         var area = levels[index];
 
@@ -74,7 +76,8 @@ public class LevelManager : MonoBehaviour
             player.SetSpawn(area.playerSpawnPosition, area.playerSpawnRotation);
 
         // ResetAll();
-Instance._currentAP = Instance.maxAP;
+        Instance._currentAP = Instance.maxAP;
+        Instance.UpdateText();
         StartCoroutine(MoveCameraTo(area.cameraPosition));
     }
 
@@ -86,6 +89,7 @@ Instance._currentAP = Instance.maxAP;
             cam.position = Vector3.MoveTowards(cam.position, target, cameraMoveSpeed * Time.deltaTime);
             yield return null;
         }
+
         cam.position = target;
     }
 

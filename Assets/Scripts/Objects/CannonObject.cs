@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -51,8 +52,14 @@ public class CannonObject : KeepableBase, IInteractable
         if (_countdown == 0)
         {
             _isFired = true;
-            fireTarget?.SetActive(true);
+            StartCoroutine(FireAfterDelay());
         }
+    }
+
+    IEnumerator FireAfterDelay()
+    {
+        yield return new WaitForSeconds(0.1f);
+        fireTarget?.SetActive(true);
     }
 
     void UpdateCountdownUI()
