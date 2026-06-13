@@ -73,7 +73,7 @@ public class LevelManager : MonoBehaviour
         if (player != null)
             player.SetSpawn(area.playerSpawnPosition, area.playerSpawnRotation);
 
-        ResetAll();
+        // ResetAll();
 
         StartCoroutine(MoveCameraTo(area.cameraPosition));
     }
