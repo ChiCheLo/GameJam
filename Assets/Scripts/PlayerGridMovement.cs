@@ -7,6 +7,7 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
     [SerializeField] private float moveSpeed = 12f;
     [SerializeField] private LayerMask wallLayer;
     [SerializeField] private Vector3 spawnPosition;
+    [SerializeField] private InteractionTrigger interactionTrigger;
 
     public static event Action OnActionTaken;
 
@@ -47,6 +48,13 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
         if (Input.GetKeyDown(KeyCode.R))
         {
             LevelManager.ResetAll();
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (interactionTrigger != null && interactionTrigger.TriggerInteract())
+                OnActionTaken?.Invoke();
+            return;
         }
 
         if (Input.GetKeyDown(KeyCode.Q))
