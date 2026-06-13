@@ -37,11 +37,14 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
 
     public NpcAiState CurrentState => _currentState;
 
-    private void Start()
+    private void Awake()
     {
         SnapToGrid();
-        _startPosition = transform.position; // 記錄初始位置供重置使用
+        _startPosition = transform.position; // 提早在 Awake 記錄初始位置，防止被早期的 OnReset() 蓋成 (0,0,0)
+    }
 
+    private void Start()
+    {
         CachePlayerMovement();
         ResetAiState();
 
