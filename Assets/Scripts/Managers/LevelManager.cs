@@ -74,7 +74,7 @@ public class LevelManager : MonoBehaviour
             player.SetSpawn(area.playerSpawnPosition, area.playerSpawnRotation);
 
         // ResetAll();
-
+Instance._currentAP = Instance.maxAP;
         StartCoroutine(MoveCameraTo(area.cameraPosition));
     }
 

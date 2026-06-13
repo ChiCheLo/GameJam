@@ -144,15 +144,25 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
             // 每次移動前，檢查狀態轉換條件（例如玩家是否在 9 宮格內）
             UpdateAiState();
 
-            // 取得目前的目標位置
-            Vector3 targetPos = GetTargetPositionForState();
-
             // 如果處於待機且未受驚擾狀態，不進行任何物理移動
             if (_currentState == NpcAiState.IdleBeforeAlarm)
             {
                 yield return null;
                 continue;
             }
+
+            // 檢查是否能關閉鬧鐘，若此步用來關鬧鐘則消耗該步，不進行物理移動
+            if (TryTurnOffAlarm())
+            {
+                if (i < steps - 1)
+                {
+                    yield return new WaitForSeconds(pauseBetweenSteps);
+                }
+                continue;
+            }
+
+            // 取得目前的目標位置
+            Vector3 targetPos = GetTargetPositionForState();
 
             Vector3 nextPos = DetermineNextStep(targetPos);
 
@@ -171,9 +181,6 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
             {
                 yield return null;
             }
-
-            // 行動後檢查（例如是否踏到了鬧鐘所在的格子）
-            CheckPostStepActions();
 
             // 如果還有下一步要走，就稍微停頓一下
             if (i < steps - 1)
@@ -207,8 +214,10 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
                 Debug.Log($"[NpcPatrolMovement] {gameObject.name} 偵測到玩家在九宮格內！切換到 ChasePlayer 狀態，下回合開始追擊。");
             }
         }
+    }
 
-        // 2. 若處於 GoToAlarm 狀態，檢查是否已經在鬧鐘的上下左右相鄰格子 (防範鬧鐘身上有碰撞體而無法踩上去)
+    private bool TryTurnOffAlarm()
+    {
         if (_currentState == NpcAiState.GoToAlarm && alarmObject != null)
         {
             Vector3Int alarmGrid = WorldToGrid(alarmObject.transform.position);
@@ -219,9 +228,11 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
             {
                 alarmObject.TurnOff();
                 _currentState = NpcAiState.ChasePlayer;
-                Debug.Log($"[NpcPatrolMovement] {gameObject.name} 已在鬧鐘旁 (距離 {dist})，直接關閉鬧鐘並切換為 Chase 模式！");
+                Debug.Log($"[NpcPatrolMovement] {gameObject.name} 已抵達鬧鐘旁 (距離 {dist})，關閉鬧鐘消耗 1 步，並切換為 Chase 模式。");
+                return true;
             }
         }
+        return false;
     }
 
     private Vector3 GetTargetPositionForState()
@@ -265,24 +276,6 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
             case NpcAiState.IdleBeforeAlarm:
             default:
                 return _targetPosition;
-        }
-    }
-
-    private void CheckPostStepActions()
-    {
-        // 前往關鬧鐘過程中，如果走到了鬧鐘格子或相鄰格子
-        if (_currentState == NpcAiState.GoToAlarm && alarmObject != null)
-        {
-            Vector3Int alarmGrid = WorldToGrid(alarmObject.transform.position);
-            Vector3Int npcGrid = WorldToGrid(_targetPosition);
-
-            int dist = Mathf.Abs(alarmGrid.x - npcGrid.x) + Mathf.Abs(alarmGrid.z - npcGrid.z);
-            if (dist <= 1)
-            {
-                alarmObject.TurnOff();
-                _currentState = NpcAiState.ChasePlayer;
-                Debug.Log($"[NpcPatrolMovement] {gameObject.name} 抵達並關閉了鬧鐘！切換到 ChasePlayer 狀態！");
-            }
         }
     }
 
