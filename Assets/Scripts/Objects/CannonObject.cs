@@ -58,7 +58,7 @@ public class CannonObject : KeepableBase, IInteractable
 
     IEnumerator FireAfterDelay()
     {
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(0.2f);
         fireTarget?.SetActive(true);
     }
 
