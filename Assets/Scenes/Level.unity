@@ -4060,6 +4060,8 @@ MonoBehaviour:
   player: {fileID: 1773518752}
   cameraMoveSpeed: 5
   gameOverUI: {fileID: 1840695230}
+  gameOverDelay: 0.2
+  gameOverFadeDuration: 0.3
   canAction: 1
 --- !u!4 &387420591
 Transform:
@@ -15090,10 +15092,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   displayImage: {fileID: 1676753743}
   frames:
-  - {fileID: 21300000, guid: 9cf3620526af0b24ca40dab2f48fa021, type: 3}
-  - {fileID: 21300000, guid: f6cdb28b0289f784f89e98a408c61e52, type: 3}
-  - {fileID: 21300000, guid: 9cc70a1bb98464d4f9920204bec3509a, type: 3}
-  - {fileID: 21300000, guid: 7ba8c339e33eac142becc527d83ba5bd, type: 3}
+  - {fileID: 21300000, guid: afdf657ce21334e46a1e70a7799f7ab0, type: 3}
+  - {fileID: 21300000, guid: 0c6ea67b8a2bc22458199333f391d4b6, type: 3}
+  - {fileID: 21300000, guid: a4db273eb96e1f74b905c9d9139337b8, type: 3}
+  - {fileID: 21300000, guid: c066510fd50e26843bdd6a7988a68c29, type: 3}
   frameDuration: 3
   returnScene: NewGame
 --- !u!4 &1270422603

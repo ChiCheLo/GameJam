@@ -17,6 +17,11 @@ public class LevelManager : MonoBehaviour
 
     [Header("Game Over")]
     [SerializeField] private GameObject gameOverUI;
+    [SerializeField] private float gameOverDelay = 0.2f;
+    [SerializeField] private float gameOverFadeDuration = 0.3f;
+    private CanvasGroup _gameOverCanvasGroup;
+    private Coroutine _gameOverCoroutine;
+    private bool _isGameOver;
 
     private int _currentAP;
     private int _currentLevelIndex;
@@ -30,6 +35,14 @@ public class LevelManager : MonoBehaviour
         PlayerGridMovement.OnActionTaken += OnActionTaken;
         UpdateText();
         SwitchLevel(0);
+
+        if (gameOverUI != null)
+        {
+            _gameOverCanvasGroup = gameOverUI.GetComponent<CanvasGroup>();
+            if (_gameOverCanvasGroup == null)
+                _gameOverCanvasGroup = gameOverUI.AddComponent<CanvasGroup>();
+            gameOverUI.SetActive(false);
+        }
     }
 
     void OnDestroy()
@@ -98,15 +111,49 @@ public class LevelManager : MonoBehaviour
 
     public static void GameOver()
     {
-        if (Instance == null) return;
-        Instance.gameOverUI?.SetActive(true);
+        if (Instance == null || Instance._isGameOver) return;
+        Instance._isGameOver = true;
         PlayerGridMovement.IsLocked = true;
+        Instance._gameOverCoroutine = Instance.StartCoroutine(Instance.ShowGameOver());
+    }
+
+    IEnumerator ShowGameOver()
+    {
+        Debug.Log($"[LevelManager] ShowGameOver 開始 | gameOverUI={gameOverUI} | canvasGroup={_gameOverCanvasGroup}");
+        yield return new WaitForSeconds(gameOverDelay);
+
+        if (gameOverUI == null)
+        {
+            Debug.LogError("[LevelManager] gameOverUI 是 null，請在 Inspector 指定");
+            yield break;
+        }
+
+        gameOverUI.SetActive(true);
+        _gameOverCanvasGroup.alpha = 0f;
+        Debug.Log("[LevelManager] gameOverUI 已顯示，開始淡入");
+
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime / gameOverFadeDuration;
+            _gameOverCanvasGroup.alpha = Mathf.Clamp01(t);
+            yield return null;
+        }
+
+        _gameOverCanvasGroup.alpha = 1f;
+        _gameOverCoroutine = null;
     }
 
     public static void ResetAll()
     {
         if (Instance == null) return;
 
+        Instance._isGameOver = false;
+        if (Instance._gameOverCoroutine != null)
+        {
+            Instance.StopCoroutine(Instance._gameOverCoroutine);
+            Instance._gameOverCoroutine = null;
+        }
         Instance.gameOverUI?.SetActive(false);
         PlayerGridMovement.IsLocked = false;
 
