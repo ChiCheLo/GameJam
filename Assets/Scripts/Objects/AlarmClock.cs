@@ -68,6 +68,7 @@ public class AlarmClock : KeepableBase, IInteractable
         _isRinging = true;
         ApplyState();
         OnAlarmRung?.Invoke();
+        AudioManager.Instance?.PlayClockRing();
         Debug.Log($"[AlarmClock] {gameObject.name} 鬧鐘響起！");
     }
 
@@ -77,6 +78,7 @@ public class AlarmClock : KeepableBase, IInteractable
         _isRinging = false;
         ApplyState();
         OnAlarmTurnedOff?.Invoke();
+        AudioManager.Instance?.StopClockRing();
         Debug.Log($"[AlarmClock] {gameObject.name} 鬧鐘被關閉。");
     }
 
@@ -100,15 +102,22 @@ public class AlarmClock : KeepableBase, IInteractable
         _isRinging = _snapshotIsRinging;
         ApplyState();
         if (_isRinging)
+        {
+            AudioManager.Instance?.PlayClockRing();
             OnAlarmRung?.Invoke();
+        }
         else
+        {
+            AudioManager.Instance?.StopClockRing();
             OnAlarmTurnedOff?.Invoke();
+        }
     }
 
     protected override void OnResetInternal()
     {
         _isRinging = false;
         _stepCounter = 0;
+        AudioManager.Instance?.StopClockRing();
         ApplyState();
         if (ringOnStart)
         {

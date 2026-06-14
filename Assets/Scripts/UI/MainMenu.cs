@@ -3,6 +3,11 @@ using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
+    void Start()
+    {
+        AudioManager.Instance?.PlayHomepageBGM();
+    }
+
     public void StartGame()
     {
         SceneManager.LoadScene("Level");

@@ -20,14 +20,17 @@ public class EndingSequence : MonoBehaviour
     {
         if (displayImage != null)
             displayImage.gameObject.SetActive(true);
+        AudioManager.Instance?.PlayEnding();
         StartCoroutine(PlaySequence());
     }
 
     IEnumerator PlaySequence()
     {
-        foreach (var frame in frames)
+        for (int i = 0; i < frames.Length; i++)
         {
-            displayImage.sprite = frame;
+            displayImage.sprite = frames[i];
+            if (i == frames.Length - 1)
+                AudioManager.Instance?.PlayCarHorn();
             yield return new WaitForSeconds(frameDuration);
         }
 

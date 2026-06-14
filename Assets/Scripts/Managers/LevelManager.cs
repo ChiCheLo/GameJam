@@ -27,6 +27,7 @@ public class LevelManager : MonoBehaviour
         PlayerGridMovement.OnActionTaken += OnActionTaken;
         UpdateText();
         SwitchLevel(0);
+        AudioManager.Instance?.PlayInGameBGM();
     }
 
     void OnDestroy()
@@ -100,6 +101,7 @@ public class LevelManager : MonoBehaviour
         Instance.canAction = true;
         Instance._currentAP = Instance.maxAP;
         Instance.UpdateText();
+        AudioManager.Instance?.PlayReset();
 
         foreach (var mb in Instance.resettables)
         {
