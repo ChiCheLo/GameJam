@@ -5,7 +5,6 @@ public class MainMenu : MonoBehaviour
 {
     void Start()
     {
-        AudioManager.Instance?.PlayHomepageBGM();
     }
 
     public void StartGame()

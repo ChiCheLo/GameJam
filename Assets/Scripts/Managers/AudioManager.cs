@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class AudioManager : MonoBehaviour
 {
@@ -24,9 +25,13 @@ public class AudioManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null) { Destroy(gameObject); return; }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+
+        string scene = SceneManager.GetActiveScene().name;
+        if (scene == "NewGame")
+            PlayHomepageBGM();
+        else if (scene == "Level")
+            PlayInGameBGM();
     }
 
     // BGM

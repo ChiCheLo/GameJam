@@ -27,7 +27,6 @@ public class LevelManager : MonoBehaviour
         PlayerGridMovement.OnActionTaken += OnActionTaken;
         UpdateText();
         SwitchLevel(0);
-        AudioManager.Instance?.PlayInGameBGM();
     }
 
     void OnDestroy()
