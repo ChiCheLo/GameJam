@@ -8,15 +8,17 @@ public class ButtonObject : KeepableBase, IInteractable
     private static readonly Color OpenColor  = Color.green;
     private static readonly Color CloseColor = Color.red;
 
+    [SerializeField] private Sprite interactSprite;
+
     private bool _isOpen;
     private bool _snapshotIsOpen;
+
+    public Sprite InteractSprite => interactSprite;
 
     void Start()
     {
         ApplyState();
     }
-
-    public string InteractLabel => "按下";
 
     public void Interact()
     {

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,7 +7,7 @@ public class InteractionTrigger : MonoBehaviour
 {
     [SerializeField] private GameObject interactUI;
     [SerializeField] private GameObject keepUI;
-    [SerializeField] private Text interactLabelText;
+    [SerializeField] private Image interactLabelImage;
 
     private readonly List<IInteractable> _interactables = new();
     private readonly List<IKeepable> _keepables = new();
@@ -67,8 +66,8 @@ public class InteractionTrigger : MonoBehaviour
         interactUI?.SetActive(hasInteractable);
         keepUI?.SetActive(hasKeepable);
 
-        if (hasInteractable && interactLabelText != null)
-            interactLabelText.text = firstValid.InteractLabel;
+        if (hasInteractable && interactLabelImage != null)
+            interactLabelImage.sprite = firstValid.InteractSprite;
     }
 
     bool IsKept(IInteractable i)

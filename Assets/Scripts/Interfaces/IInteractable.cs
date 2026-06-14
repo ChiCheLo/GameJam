@@ -1,5 +1,7 @@
+using UnityEngine;
+
 public interface IInteractable
 {
     void Interact();
-    string InteractLabel => "互動";
+    Sprite InteractSprite { get; }
 }

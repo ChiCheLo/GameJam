@@ -6,9 +6,11 @@ public class CannonObject : KeepableBase, IInteractable
 {
     [SerializeField] private GameObject fireTarget;
     [SerializeField] private GameObject countdownDisplay;
-    [SerializeField] private Text countdownText;
+    [SerializeField] private Image countdownImage;
+    [SerializeField] private Sprite[] countdownSprites;  // [0]=剩兩步, [1]=剩一步
+    [SerializeField] private Sprite interactSprite;
 
-    public string InteractLabel => "發射!";
+    public Sprite InteractSprite => interactSprite;
 
     private int  _countdown;
     private bool _isFired;
@@ -25,7 +27,7 @@ public class CannonObject : KeepableBase, IInteractable
         _justIgnited  = true;
         Subscribe();
         UpdateCountdownUI();
-        AudioManager.Instance?.PlayBurn();
+        UpdateBurnAudio();
     }
 
     void OnActionTaken()
@@ -59,10 +61,19 @@ public class CannonObject : KeepableBase, IInteractable
 
     IEnumerator FireAfterDelay()
     {
-        yield return new WaitForSeconds(0.2f);
-        AudioManager.Instance?.StopBurn();
+        UpdateBurnAudio();
         AudioManager.Instance?.PlayCannonFire();
+        yield return new WaitForSeconds(0.2f);
         fireTarget?.SetActive(true);
+    }
+
+    void UpdateBurnAudio()
+    {
+        Debug.Log($"[CannonObject] UpdateBurnAudio | _countdown={_countdown} | Instance={AudioManager.Instance}");
+        if (_countdown > 0)
+            AudioManager.Instance?.PlayBurn();
+        else
+            AudioManager.Instance?.StopBurn();
     }
 
     void UpdateCountdownUI()
@@ -72,8 +83,12 @@ public class CannonObject : KeepableBase, IInteractable
         bool active = _countdown > 0;
         countdownDisplay.SetActive(active);
 
-        if (active && countdownText != null)
-            countdownText.text = _countdown == 1 ? "下次行動發射" : "剩兩次行動發射";
+        if (active && countdownImage != null && countdownSprites != null)
+        {
+            int index = _countdown == 1 ? 1 : 0;
+            if (index < countdownSprites.Length)
+                countdownImage.sprite = countdownSprites[index];
+        }
     }
 
     void Subscribe()
@@ -108,15 +123,9 @@ public class CannonObject : KeepableBase, IInteractable
         fireTarget?.SetActive(_isFired);
 
         if (_countdown > 0 || _isFired)
-        {
             Subscribe();
-            AudioManager.Instance?.PlayBurn();
-        }
-        else
-        {
-            AudioManager.Instance?.StopBurn();
-        }
 
+        UpdateBurnAudio();
         UpdateCountdownUI();
     }
 
@@ -127,7 +136,7 @@ public class CannonObject : KeepableBase, IInteractable
         _countdown   = 0;
         _isFired     = false;
         fireTarget?.SetActive(false);
-        AudioManager.Instance?.StopBurn();
+        UpdateBurnAudio();
         UpdateCountdownUI();
     }
 }

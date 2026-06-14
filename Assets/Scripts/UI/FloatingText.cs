@@ -1,18 +1,16 @@
 using System.Collections;
-using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class FloatingText : MonoBehaviour
 {
-    [SerializeField] private TMP_Text label;
-    [SerializeField] private string text = "鈴鈴鈴";
+    [SerializeField] private Image icon;
     [SerializeField] private float duration = 1.2f;
 
     private Coroutine _loop;
 
     void Awake()
     {
-        if (label != null) label.text = text;
         gameObject.SetActive(false);
     }
 
@@ -41,15 +39,15 @@ public class FloatingText : MonoBehaviour
             while (t < 1f)
             {
                 t += Time.deltaTime / duration;
-                var c = label.color;
+                var c = icon.color;
                 c.a = 1f - t;
-                label.color = c;
+                icon.color = c;
                 yield return null;
             }
 
-            var reset = label.color;
+            var reset = icon.color;
             reset.a = 1f;
-            label.color = reset;
+            icon.color = reset;
         }
     }
 }

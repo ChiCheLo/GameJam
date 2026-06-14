@@ -7,6 +7,10 @@ public class AlarmClock : KeepableBase, IInteractable
     public event Action OnAlarmTurnedOff;
 
     [SerializeField] private FloatingText floatingText;
+    [SerializeField] private Sprite interactSpriteRinging;
+    [SerializeField] private Sprite interactSpriteIdle;
+
+    public Sprite InteractSprite => _isRinging ? interactSpriteRinging : interactSpriteIdle;
 
     [Header("Alarm Settings")]
     [SerializeField] private bool ringOnStart = false;
@@ -20,7 +24,6 @@ public class AlarmClock : KeepableBase, IInteractable
     private int _snapshotStepCounter;
 
     public bool IsRinging => _isRinging;
-    public string InteractLabel => _isRinging ? "關閉" : "啟動";
 
     private void Start()
     {

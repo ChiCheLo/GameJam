@@ -44,13 +44,33 @@ public class AudioManager : MonoBehaviour
         bgmSource.clip = clip;
         bgmSource.loop = true;
         bgmSource.Play();
+        Debug.Log($"[AudioManager] BGM 開始: {clip?.name}");
     }
 
     // 單次 SE
-    public void PlayReset()      => sfxSource.PlayOneShot(resetSFX);
-    public void PlayCannonFire() => sfxSource.PlayOneShot(cannonFireSFX);
-    public void PlayEnding()     => sfxSource.PlayOneShot(endingSFX);
-    public void PlayCarHorn()    => sfxSource.PlayOneShot(carHornSFX);
+    public void PlayReset()
+    {
+        Debug.Log("[AudioManager] SE: Reset");
+        sfxSource.PlayOneShot(resetSFX);
+    }
+
+    public void PlayCannonFire()
+    {
+        Debug.Log("[AudioManager] SE: CannonFire");
+        sfxSource.PlayOneShot(cannonFireSFX);
+    }
+
+    public void PlayEnding()
+    {
+        Debug.Log("[AudioManager] SE: Ending");
+        sfxSource.PlayOneShot(endingSFX);
+    }
+
+    public void PlayCarHorn()
+    {
+        Debug.Log("[AudioManager] SE: CarHorn");
+        sfxSource.PlayOneShot(carHornSFX);
+    }
 
     // 循環 SE — 鬧鐘
     public void PlayClockRing()
@@ -59,18 +79,30 @@ public class AudioManager : MonoBehaviour
         clockSource.clip = clockRingSFX;
         clockSource.loop = true;
         clockSource.Play();
+        Debug.Log("[AudioManager] Loop 開始: ClockRing");
     }
 
-    public void StopClockRing() { if (clockSource != null) clockSource.Stop(); }
+    public void StopClockRing()
+    {
+        if (clockSource != null) clockSource.Stop();
+        Debug.Log("[AudioManager] Loop 結束: ClockRing");
+    }
 
     // 循環 SE — 點燃
     public void PlayBurn()
     {
+        Debug.Log($"[AudioManager] PlayBurn 被呼叫 | burnSource={burnSource} | burnSFX={burnSFX} | isPlaying={burnSource?.isPlaying}");
         if (burnSource == null || burnSource.isPlaying) return;
         burnSource.clip = burnSFX;
         burnSource.loop = true;
         burnSource.Play();
+        Debug.Log("[AudioManager] Loop 開始: Burn");
     }
 
-    public void StopBurn() { if (burnSource != null) burnSource.Stop(); }
+    public void StopBurn()
+    {
+        Debug.Log($"[AudioManager] StopBurn 被呼叫 | burnSource={burnSource}");
+        if (burnSource != null) burnSource.Stop();
+        Debug.Log("[AudioManager] Loop 結束: Burn");
+    }
 }
