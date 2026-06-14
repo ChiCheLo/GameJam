@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Custom_FullScreen_CRT
+  m_Shader: {fileID: 4800000, guid: dbcd223379e666c4aa3022d4eb3ea405, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BlackTex:
+        m_Texture: {fileID: 2800000, guid: b76a2cd1cdb0afc48abda380559d7bc8, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _LineTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoiseMap:
+        m_Texture: {fileID: 2800000, guid: 72d43c1ebbfca4f4a8bff3a1837e323e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ScanBarTex:
+        m_Texture: {fileID: 2800000, guid: 049c517acaecca74d914109af566d20b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AberrationAmount: 0.117
+    - _Brightness: 3
+    - _FisheyeStrength: 0.31
+    - _LineAlpha: 0.409
+    - _LineGap: 0.005
+    - _LineWidth: 0.003
+    - _NoiseIntensity: -0.1
+    - _NoiseSpeed: 0.2
+    - _ScanBarAlpha: 0.36
+    - _ScanBarSpeed: 5
+    - _Speed: 0
+    - _Strength: 0.5
+    - _Test1: 0.1
+    - _Test2: 1
+    - _Test3: 0.1
+    - _VignetteBrightness: 10
+    - _VignetteIntensity: 0.1
+    m_Colors:
+    - _AberrationAmount: {r: 0, g: 0, b: 0, a: 0}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.8132075, g: 1, b: 0.8238879, a: 1}
+    - _MainColor: {r: 0.9147362, g: 1, b: 0.8584906, a: 1}
+  m_BuildTextureStacks: []
