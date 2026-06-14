@@ -25,6 +25,7 @@ public class CannonObject : KeepableBase, IInteractable
         _justIgnited  = true;
         Subscribe();
         UpdateCountdownUI();
+        AudioManager.Instance?.PlayBurn();
     }
 
     void OnActionTaken()
@@ -59,6 +60,8 @@ public class CannonObject : KeepableBase, IInteractable
     IEnumerator FireAfterDelay()
     {
         yield return new WaitForSeconds(0.2f);
+        AudioManager.Instance?.StopBurn();
+        AudioManager.Instance?.PlayCannonFire();
         fireTarget?.SetActive(true);
     }
 
@@ -105,7 +108,14 @@ public class CannonObject : KeepableBase, IInteractable
         fireTarget?.SetActive(_isFired);
 
         if (_countdown > 0 || _isFired)
+        {
             Subscribe();
+            AudioManager.Instance?.PlayBurn();
+        }
+        else
+        {
+            AudioManager.Instance?.StopBurn();
+        }
 
         UpdateCountdownUI();
     }
@@ -117,6 +127,7 @@ public class CannonObject : KeepableBase, IInteractable
         _countdown   = 0;
         _isFired     = false;
         fireTarget?.SetActive(false);
+        AudioManager.Instance?.StopBurn();
         UpdateCountdownUI();
     }
 }
