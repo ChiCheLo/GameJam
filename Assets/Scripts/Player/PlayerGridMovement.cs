@@ -22,6 +22,7 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
 
     void Start()
     {
+        IsLocked = false;
         transform.position = spawnPosition;
         _targetPosition = spawnPosition;
         _spawnRotation = transform.rotation;
