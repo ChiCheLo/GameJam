@@ -15,6 +15,9 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private PlayerGridMovement player;
     [SerializeField] private float cameraMoveSpeed = 5f;
 
+    [Header("Game Over")]
+    [SerializeField] private GameObject gameOverUI;
+
     private int _currentAP;
     private int _currentLevelIndex;
     public bool canAction = true;
@@ -46,7 +49,7 @@ public class LevelManager : MonoBehaviour
     void UpdateText()
     {
         if (apText != null)
-            apText.text = $"AP: {_currentAP} / {maxAP}";
+            apText.text = $"{_currentAP}/{maxAP}";
     }
 
     public void NextLevel()
@@ -93,9 +96,19 @@ public class LevelManager : MonoBehaviour
         cam.position = target;
     }
 
+    public static void GameOver()
+    {
+        if (Instance == null) return;
+        Instance.gameOverUI?.SetActive(true);
+        PlayerGridMovement.IsLocked = true;
+    }
+
     public static void ResetAll()
     {
         if (Instance == null) return;
+
+        Instance.gameOverUI?.SetActive(false);
+        PlayerGridMovement.IsLocked = false;
 
         Instance.canAction = true;
         Instance._currentAP = Instance.maxAP;

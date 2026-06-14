@@ -35,6 +35,7 @@ public abstract class KeepableBase : MonoBehaviour, IKeepable, IResettable
 
     public void OnReset()
     {
+        Debug.Log($"[KeepableBase] {gameObject.name} OnReset | IsKept={IsKept}");
         if (IsKept)
         {
             RestoreSnapshot();

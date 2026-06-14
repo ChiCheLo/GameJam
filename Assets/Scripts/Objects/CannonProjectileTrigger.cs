@@ -9,7 +9,7 @@ public class CannonProjectileTrigger : MonoBehaviour
     {
         if (other.GetComponent<PlayerGridMovement>() != null)
         {
-            LevelManager.ResetAll();
+            LevelManager.GameOver();
             return;
         }
 

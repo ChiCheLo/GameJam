@@ -2,12 +2,10 @@ using UnityEngine;
 
 public class ButtonObject : KeepableBase, IInteractable
 {
-    [SerializeField] private Renderer buttonRenderer;
+    [SerializeField] private Light pointLight;
+    [SerializeField] private Color openColor  = Color.green;
+    [SerializeField] private Color closeColor = Color.red;
     [SerializeField] private DoorObject linkedDoor;
-
-    private static readonly Color OpenColor  = Color.green;
-    private static readonly Color CloseColor = Color.red;
-
     [SerializeField] private Sprite interactSprite;
 
     private bool _isOpen;
@@ -42,8 +40,8 @@ public class ButtonObject : KeepableBase, IInteractable
 
     void ApplyState()
     {
-        if (buttonRenderer != null)
-            buttonRenderer.material.color = _isOpen ? OpenColor : CloseColor;
+        if (pointLight != null)
+            pointLight.color = _isOpen ? openColor : closeColor;
 
         if (linkedDoor != null)
             linkedDoor.SetOpen(_isOpen);

@@ -85,7 +85,7 @@ public class AudioManager : MonoBehaviour
     public void StopClockRing()
     {
         if (clockSource != null) clockSource.Stop();
-        Debug.Log("[AudioManager] Loop 結束: ClockRing");
+        Debug.Log($"[AudioManager] Loop 結束: ClockRing\n{System.Environment.StackTrace}");
     }
 
     // 循環 SE — 點燃

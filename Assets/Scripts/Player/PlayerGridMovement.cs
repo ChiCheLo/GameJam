@@ -10,6 +10,7 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
     [SerializeField] private InteractionTrigger interactionTrigger;
 
     public static event Action OnActionTaken;
+    public static bool IsLocked { get; set; }
 
     private Vector3 _targetPosition;
     private Quaternion _targetRotation;
@@ -53,7 +54,10 @@ public class PlayerGridMovement : MonoBehaviour, IResettable
         if (Input.GetKeyDown(KeyCode.R))
         {
             LevelManager.ResetAll();
+            return;
         }
+
+        if (IsLocked) return;
 
         if (_inputCooldown > 0) return;
 

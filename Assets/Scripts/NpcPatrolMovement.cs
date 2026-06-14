@@ -115,8 +115,8 @@ public class NpcPatrolMovement : MonoBehaviour, IResettable
         {
             if (WorldToGrid(transform.position) == WorldToGrid(playerTransform.position))
             {
-                Debug.Log($"[NpcPatrolMovement] 偵測到玩家與 NPC 重疊！重置關卡。");
-                LevelManager.ResetAll();
+                Debug.Log($"[NpcPatrolMovement] 偵測到玩家與 NPC 重疊！");
+                LevelManager.GameOver();
             }
         }
     }
